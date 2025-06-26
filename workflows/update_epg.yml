@@ -1,0 +1,33 @@
+name: Update EPG
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # Каждый день в 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  update-epg:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Download EPG file
+        run: |
+          pip install requests
+          python update_epg.py
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add epg2.xml
+          git commit -m "Автоматическое обновление EPG"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
