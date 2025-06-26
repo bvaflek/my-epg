@@ -1,56 +1,39 @@
-name: Update EPG
-
-on:
-  schedule:
-    - cron: '0 3 * * *'  # Щодня о 03:00 UTC
-  workflow_dispatch:
-
-permissions:
-  contents: write
-  pull-requests: write
-
-jobs:
-  update-epg:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies and update EPG
+      - name: Створити .gitignore
         run: |
-          pip install requests
-          python update_epg.py
+          cat > .gitignore << 'EOF'
+          __pycache__/
+          *.py[cod]
+          *.pyo
+          *.pyd
+          *.swp
+          *.bak
+          *.tmp
+          *.log
+          .venv/
+          env/
+          venv/
+          .DS_Store
+          Thumbs.db
+          .vscode/
+          .idea/
+          htmlcov/
+          .tox/
+          .coverage
+          coverage.xml
+          .pytest_cache/
+          *.workflow.log
+          epg*.bak
+          epg*.old
+          EOF
 
-      - name: Set up Git config and checkout branch
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -B epg-bot
-
-      - name: Commit changes if any
-        run: |
-          git add epg2.xml
-          git diff --cached --quiet && echo "No changes to commit" || git commit -m "Автоматическое обновление EPG"
-
-      - name: Push to epg-bot branch
-        run: git push origin epg-bot --force
-
-      - name: Create or update Pull Request
-        uses: peter-evans/create-pull-request@v6
+      - name: Commit & PR
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: Автоматическое обновление EPG
+          commit-message: "Додано .gitignore"
           branch: epg-bot
-          title: Обновление EPG
-          body: |
-            Этот pull request создан автоматически GitHub Actions и содержит обновлённый файл `epg2.xml`.
-            Проверь изменения и подтверди слияние, если всё в порядке.
+          title: "Додано .gitignore"
+          body: "Автоматичний додаток `.gitignore` для очищення репозиторію"
           base: main
+          # видаляє гілку після злиття
+          delete-branch: true
