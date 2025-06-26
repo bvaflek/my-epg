@@ -7,15 +7,16 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   update-epg:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Set up Python
@@ -23,18 +24,32 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Download EPG file
+      - name: Install dependencies and update EPG
         run: |
           pip install requests
           python update_epg.py
 
-      - name: Commit and push changes
-      run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add epg2.xml
-        git commit -m "Автоматическое обновление EPG" || echo "No changes to commit"
-        git pull --rebase origin main
-        git push
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create or switch to bot branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B epg-bot
+
+      - name: Commit changes
+        run: |
+          git add epg2.xml
+          git diff --cached --quiet && echo "No changes to commit" || git commit -m "Автоматическое обновление EPG"
+
+      - name: Push changes
+        run: git push origin epg-bot --force
+
+      - name: Create or update pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: Автоматическое обновление EPG
+          branch: epg-bot
+          title: Обновление EPG
+          body: |
+            Этот pull request содержит автоматическое обновление EPG файла (`epg2.xml`).
+          base: main
