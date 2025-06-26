@@ -2,7 +2,7 @@ name: Update EPG
 
 on:
   schedule:
-    - cron: '0 3 * * *'
+    - cron: '0 3 * * *'  # Щодня о 03:00 UTC
   workflow_dispatch:
 
 permissions:
@@ -29,21 +29,21 @@ jobs:
           pip install requests
           python update_epg.py
 
-      - name: Create or switch to bot branch
+      - name: Set up Git config and checkout branch
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -B epg-bot
 
-      - name: Commit changes
+      - name: Commit changes if any
         run: |
           git add epg2.xml
           git diff --cached --quiet && echo "No changes to commit" || git commit -m "Автоматическое обновление EPG"
 
-      - name: Push changes
+      - name: Push to epg-bot branch
         run: git push origin epg-bot --force
 
-      - name: Create or update pull request
+      - name: Create or update Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -51,5 +51,6 @@ jobs:
           branch: epg-bot
           title: Обновление EPG
           body: |
-            Этот pull request содержит автоматическое обновление EPG файла (`epg2.xml`).
+            Этот pull request создан автоматически GitHub Actions и содержит обновлённый файл `epg2.xml`.
+            Проверь изменения и подтверди слияние, если всё в порядке.
           base: main
